@@ -5,51 +5,67 @@ import './App.css';
 import Header from './Header';
 import AddContact from './AddContact';
 import ContactList from './ContactList';
-import Profile from './Profile';
+import api from '../api/contact';
 
 
 function App() {
-  const [contacts, setContact] = useState(() => {
-    let hs_contacts = JSON.parse(localStorage.getItem("contacts"));
-    return hs_contacts? hs_contacts : [];
-  });
+  // const [contacts, setContact] = useState(() => {
+  //   let hs_contacts = JSON.parse(localStorage.getItem("contacts"));
+  //   return hs_contacts? hs_contacts : [];
+  // });
+  // const LOCAL_STORAGE_KEY = "contacts";
+  const [contacts, setContact] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const LOCAL_STORAGE_KEY = "contacts";
-
-  const addContact = (contact) => {
-    setContact([...contacts, contact]);
+  //Retreive Contacts
+  const retrieveContacts = async () => {
+    const response = await api.get("/contact");
+    return response.data;
   }
 
-  // useEffect(() => {
-  //   const retrieveContacts = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY));
-  //   if(retrieveContacts) setContact(retrieveContacts);
-  // }, []);
+
+  const addContact = async (contact) => {
+    const newid = (contacts[contacts.length-1])? contacts[contacts.length-1].id + 1 : 1;
+    const request = {
+      id: newid,
+      ...contact
+    }
+
+    const response = await api.post("/contact", request);
+    setContact([...contacts, response.data]);
+  }
 
   useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(contacts));
-  }, [contacts]);
+    // const retrieveContacts = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY));
+    // if(retrieveContacts) setContact(retrieveContacts);
+    const getAllContacts = async () =>{
+      const allContact = await retrieveContacts();
+      if(allContact) setContact(allContact);
+    }
+    getAllContacts();
 
-  const removeItem = (index) => {
+  }, []);
+
+  // useEffect(() => {
+  //   localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(contacts));
+  // }, [contacts]);
+
+  const removeItem = async (id) => {
     // let newcontacts = [...contacts];
     // newcontacts.splice(index, 1);
-    let newcontacts = contacts.filter((contact, id) => {
-      return id !== index;
+    await api.delete(`/contact/${id}`);
+
+    let newcontacts = contacts.filter((contact) => {
+      return id !== contact.id;
     });
 
     setContact(newcontacts);
-  }
-  const [count, setCount] = useState(0);
-  const handleClick = () => {
-    setCount(count + 1);
   }
   return (
     <div className="ui container">
         <Header />
         <AddContact addContact={addContact} />
-        <ContactList contacts={contacts} removeItem={removeItem} />
-        {/* <Profile count={count} handleClick={handleClick} /> */}
-        {/* <Profile count={count} handleClick={handleClick} /> */}
-
+        <ContactList contacts={contacts} removeItem={removeItem} searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
     </div>
   );
 }
