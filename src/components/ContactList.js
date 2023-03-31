@@ -1,30 +1,40 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useContactCrud } from '../context/ContactCrudContext';
 import ContactCard from './ContactCard';
+import { Link } from 'react-router-dom';
 
 const ContactList = (props) => {
-    const renderContactListItems = props.contacts.map((contact, i) => {
-        
-        if(props.searchTerm && (contact.name.toLowerCase().indexOf(props.searchTerm.toLowerCase()) === -1) && (contact.email.toLowerCase().indexOf(props.searchTerm.toLowerCase()) === -1)){
-            return '';
-        }
+    const { contacts, retrieveContacts, searchTerm, searchResult, searchHandler } = useContactCrud();
+    let contactList = (searchTerm.length > 1) ? searchResult : contacts;
 
-        return(
-            <ContactCard contact={contact} key={contact.id} index={contact.id} removeItem={props.removeItem} />
+    useEffect(() => {
+        retrieveContacts();
+    }, [retrieveContacts]);
+
+    const renderContactListItems = contactList.map((contact, i) => {
+        return (
+            <ContactCard contact={contact} key={contact.id} index={contact.id} />
         );
     });
-    return(
+
+    const getSearchTerm = (term) => {
+        searchHandler(term);
+    }
+
+    return (
         <div className="main">
-            <h2>Contact List</h2>
+            <h2>Contact List <Link to="/add"><button className="ui button blue right floated">Add Contact</button></Link></h2>
+            
             <div className="ui search">
-                <div className="ui icon input">
-                    <input type="text" name="searchContact" id="searchContact" className='' value={props.searchTerm} onChange={(e) => {
-                        props.setSearchTerm(e.target.value);
+                <div className="ui fluid icon input">
+                    <input type="text" name="searchContact" id="searchContact" placeholder='Search Contacts...' className='prompt' value={searchTerm} onChange={(e) => {
+                        getSearchTerm(e.currentTarget.value);
                     }} />
                     <i className="search icon"></i>
                 </div>
             </div>
             <div className='ui celled list'>
-                {renderContactListItems}
+                {renderContactListItems.length > 0 ? renderContactListItems : "No Contacts available"}
             </div>
         </div>
     );
